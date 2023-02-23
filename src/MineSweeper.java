@@ -11,7 +11,9 @@ import java.util.Random;
 
 public class MineSweeper extends JFrame implements MouseListener, ActionListener {
 
+    // ATTENTION: height is the number of rows and width is the number of columns
     int width = 8, height = 8, mines = 10;
+
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
     JLabel[][] playBoard;
@@ -21,9 +23,15 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JButton fieldOptions9x9;
     JButton fieldOptions16x16;
     JButton fieldOptions30x16;
-    Border test = BorderFactory.createLineBorder(Color.WHITE, 2);
+    Dimension screenDimensions = Toolkit.getDefaultToolkit().getScreenSize();
+
+    // Some height is deleted because of the quick access bar at the bottom of every OS
+    int screenHeight = (int)screenDimensions.getHeight() - 201;
+    int screenWidth = (int)screenDimensions.getWidth();
 
     boolean startMatch = false;
+    Border test = BorderFactory.createLineBorder(Color.WHITE, 1);
+    Border boardBorder = BorderFactory.createLineBorder(new Color(0x7c7b7d), 1);
     Color backgroundTheme = new Color(0x121212);
     Color panelTheme = new Color(0x1e1e1e);
     Font buttonsFont = new Font("Futura", Font.BOLD, 30);
@@ -149,22 +157,34 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     }
 
     public void boardCreation() {
+        // Setting the correct width based on the number of rows and columns
+        int squareSize = screenHeight / height;
+        int boardWidth = squareSize * width;
+        int boardHeight = screenHeight;
+        // Handling the case where the boardWidth becomes higher than the screenWidth
+        if (boardWidth > screenWidth) {
+            squareSize = screenWidth / width;
+            boardHeight = squareSize * height;
+            boardWidth = screenWidth;
+        }
+
         // Settings regarding the main board
+        mainBoard.setBounds(0, 130, boardWidth, boardHeight);
         mainBoard.setBackground(backgroundTheme);
-        mainBoard.setLayout(new GridLayout(width, height));
+        mainBoard.setLayout(new GridLayout(height, width));
         mainBoard.setBorder(test);
 
         // play board creation: matrix declaration
-        playBoard = new JLabel[width][height];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        playBoard = new JLabel[height][width];
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 playBoard[i][j] = new JLabel();
                 playBoard[i][j].setForeground(Color.WHITE);
-                playBoard[i][j].setBorder(test);
+                playBoard[i][j].setBorder(boardBorder);
                 mainBoard.add(playBoard[i][j]);
+                playBoard[i][j].repaint();
             }
         }
-        this.repaint();
     }
 
     MineSweeper() {
@@ -172,6 +192,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         selectDifficultyPanel = new JPanel();
         this.add(selectDifficultyPanel);
         selectDifficulty();
+        this.setLayout(null);
         mainBoard = new JPanel();
         this.add(mainBoard);
         boardCreation();
