@@ -182,7 +182,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                 playBoard[i][j].setForeground(Color.WHITE);
                 playBoard[i][j].setBorder(boardBorder);
                 mainBoard.add(playBoard[i][j]);
-                playBoard[i][j].repaint();
             }
         }
     }
