@@ -166,10 +166,13 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             squareSize = screenWidth / width;
             boardHeight = squareSize * height;
             boardWidth = screenWidth;
+            mainBoard.setBounds(0, 130, boardWidth, boardHeight);
+        } else {
+            int emptySpaceBoard = (screenWidth - boardWidth) / 2;
+            mainBoard.setBounds(emptySpaceBoard, 130, boardWidth, boardHeight);
         }
 
         // Settings regarding the main board
-        mainBoard.setBounds(0, 130, boardWidth, boardHeight);
         mainBoard.setBackground(backgroundTheme);
         mainBoard.setLayout(new GridLayout(height, width));
         mainBoard.setBorder(test);
@@ -179,9 +182,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 playBoard[i][j] = new JLabel();
+                mainBoard.add(playBoard[i][j]);
                 playBoard[i][j].setForeground(Color.WHITE);
                 playBoard[i][j].setBorder(boardBorder);
-                mainBoard.add(playBoard[i][j]);
             }
         }
     }
