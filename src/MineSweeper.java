@@ -13,6 +13,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     // ATTENTION: height is the number of rows and width is the number of columns
     int width = 8, height = 8, mines = 10;
+    int seconds = 0, minutes = 0;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
@@ -24,6 +25,14 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JButton fieldOptions16x16;
     JButton fieldOptions30x16;
     Dimension screenDimensions = Toolkit.getDefaultToolkit().getScreenSize();
+    Timer chronometer;
+    JPanel chronometerPanel;
+    JLabel displayTime;
+
+    // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
+    int[][] numberBoard;
+    // A first input is created in order to generate the board after it
+    boolean firstInput = false;
 
     // Some height is deleted because of the quick access bar at the bottom of every OS
     int screenHeight = (int)screenDimensions.getHeight() - 201;
@@ -156,7 +165,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.repaint();
     }
 
-    public void boardCreation() {
+    public void boardGeneration() {
         // Setting the correct width based on the number of rows and columns
         int squareSize = screenHeight / height;
         int boardWidth = squareSize * width;
@@ -175,7 +184,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         // Settings regarding the main board
         mainBoard.setBackground(backgroundTheme);
         mainBoard.setLayout(new GridLayout(height, width));
-        mainBoard.setBorder(test);
 
         // play board creation: matrix declaration
         playBoard = new JLabel[height][width];
@@ -189,6 +197,48 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         }
     }
 
+    public void timerGeneration() {
+        // Chronometer declaration
+        chronometer = new Timer(1000, this);
+        chronometer.start();
+
+        // Adding the chronometer panel to the main screen
+        chronometerPanel = new JPanel();
+        this.add(chronometerPanel);
+        chronometerPanel.setBounds(10, 25, screenWidth - 10, 100);
+        displayTime = new JLabel("00:00");
+        chronometerPanel.add(displayTime);
+
+        // Panel design
+        chronometerPanel.setBackground(backgroundTheme);
+        displayTime.setForeground(Color.WHITE);
+        displayTime.setFont(buttonsFont);
+    }
+
+    public void numberGeneration() {
+        Random randomizer = new Random();
+        numberBoard = new int[height][width];
+        // Assigning 0 to all cells
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                numberBoard[i][j] = 0;
+            }
+        }
+
+        // Calculation of the mines based on the percentage, width and height
+        int totalCellNumber = width * height;
+        int mineNumber = totalCellNumber * mines / 100;
+        int assignRow, assignColumn;
+        while (mineNumber > 0) {
+            assignRow = randomizer.nextInt(0, height);
+            assignColumn = randomizer.nextInt(0, width);
+            if (!(numberBoard[assignRow][assignColumn] == -1)) {
+                mineNumber--;
+            }
+            playBoard[assignRow][assignColumn].setText("-1");
+        }
+    }
+
     MineSweeper() {
         initialSettings();
         selectDifficultyPanel = new JPanel();
@@ -197,11 +247,36 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.setLayout(null);
         mainBoard = new JPanel();
         this.add(mainBoard);
-        boardCreation();
+        boardGeneration();
+        timerGeneration();
+        numberGeneration();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == chronometer) {
+            seconds++;
+            chronometerPanel.repaint();
+            if (seconds == 60) {
+                minutes++;
+                seconds = 0;
+                if (minutes == 60) {
+                    minutes = 59;
+                    seconds = 59;
+                    chronometer.stop();
+                }
+            }
+            // Display the first zero for single bit numbers in the chronometer
+            if (minutes < 10 && seconds < 10) {
+                displayTime.setText("0" + minutes + ":" + "0" + seconds);
+            } else if (minutes < 10 && seconds >= 10) {
+                displayTime.setText("0" + minutes + ":" + seconds);
+            } else if (minutes >= 10 && seconds < 10) {
+                displayTime.setText(minutes + ":" + "0" + seconds);
+            } else if (minutes >= 10 && seconds >= 10) {
+                displayTime.setText(minutes + ":" + seconds);
+            }
+        }
         if (e.getSource() == confirmButton) {
             startMatch = true;
         } else if (e.getSource() == fieldOptions9x9) {
