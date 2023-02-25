@@ -15,6 +15,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     int width = 8, height = 8, mines = 10;
     int seconds = 0, minutes = 0;
     int mineCounter;
+    int squareSize = 0;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
@@ -169,7 +170,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     public void boardGeneration() {
         // Setting the correct width based on the number of rows and columns
-        int squareSize = screenHeight / height;
+        squareSize = screenHeight / height;
         int boardWidth = squareSize * width;
         int boardHeight = screenHeight;
         // Handling the case where the boardWidth becomes higher than the screenWidth
@@ -262,8 +263,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.add(mainBoard);
         boardGeneration();
         timerGeneration();
-        flag = new ImageIcon(new ImageIcon("flag.png").getImage().getScaledInstance(playBoard[0][0].getWidth(), playBoard[0][0].getHeight(), Image.SCALE_SMOOTH));
-        notSure = new ImageIcon(new ImageIcon("notsure.png").getImage().getScaledInstance(playBoard[0][0].getWidth(), playBoard[0][0].getHeight(), Image.SCALE_SMOOTH));
+        System.out.println(squareSize);
+        flag = new ImageIcon(new ImageIcon("flag.png").getImage().getScaledInstance(squareSize, squareSize, Image.SCALE_SMOOTH));
+        notSure = new ImageIcon(new ImageIcon("notsure.png").getImage().getScaledInstance(squareSize, squareSize, Image.SCALE_SMOOTH));
     }
 
     @Override
