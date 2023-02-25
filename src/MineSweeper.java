@@ -14,13 +14,16 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     // ATTENTION: height is the number of rows and width is the number of columns
     int width = 8, height = 8, mines = 10;
     int seconds = 0, minutes = 0;
-    int mineCounter;
+    int mineCounter = 1;
     int squareSize = 0;
     int boardFontSize = 4;
+    // Used to indicate how many cells the players needs to uncover before winning
+    int leftToWin = 1;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
     JLabel[][] playBoard;
+    JPanel minesPanel;
     JSlider selectRows, selectColumns, selectMines;
     ImageIcon flag;
     ImageIcon notSure;
@@ -33,11 +36,14 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     Timer chronometer;
     JPanel chronometerPanel;
     JLabel displayTime;
+    JLabel minesLeft;
 
     // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
     int[][] numberBoard;
     // A first input is created in order to generate the board after it
     boolean firstInput = false;
+    // Makes sure not to iterate useless cycles when the game ends
+    boolean endGame = false;
 
     // Some height is deleted because of the quick access bar at the bottom of every OS
     int screenHeight = (int)screenDimensions.getHeight() - 201;
@@ -64,7 +70,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         selectDifficultyPanel.setBackground(backgroundTheme);
 
         // Creation of a dedicated panel to each section: rows, columns, mines
-        GridLayout selectionLayout = new GridLayout(2, 1);
         JPanel selectRowsPanel = new JPanel();
         JPanel selectColumnsPanel = new JPanel();
         JPanel selectMinesPanel = new JPanel();
@@ -81,19 +86,19 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         // Label regarding the number chosen in the JSlider
         JLabel rowsNumber = new JLabel(" ");
         JLabel columnsNumber = new JLabel(" ");
-        JLabel minesNumber = new JLabel(" ");
+        JLabel minesLeft = new JLabel(" ");
         selectRowsPanel.add(rowsNumber);
         selectColumnsPanel.add(columnsNumber);
-        selectMinesPanel.add(minesNumber);
+        selectMinesPanel.add(minesLeft);
         rowsNumber.setForeground(Color.WHITE);
         rowsNumber.setFont(new Font("Futura", Font.BOLD, 30));
         rowsNumber.setBounds(15, 5, 500, 50);
         columnsNumber.setForeground(Color.WHITE);
         columnsNumber.setFont(new Font("Futura", Font.BOLD, 30));
         columnsNumber.setBounds(15, 5, 500, 50);
-        minesNumber.setForeground(Color.WHITE);
-        minesNumber.setFont(new Font("Futura", Font.BOLD, 30));
-        minesNumber.setBounds(15, 5, 500, 50);
+        minesLeft.setForeground(Color.WHITE);
+        minesLeft.setFont(new Font("Futura", Font.BOLD, 30));
+        minesLeft.setBounds(15, 5, 500, 50);
 
         selectRows = new JSlider(8, 65, 8);
         selectColumns = new JSlider(8, 65, 8);
@@ -159,7 +164,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         while (!startMatch) {
             rowsNumber.setText("Larghezza: " + selectRows.getValue());
             columnsNumber.setText("Altezza: " + selectColumns.getValue());
-            minesNumber.setText("Percentuale mine: " + selectMines.getValue() + "%");
+            minesLeft.setText("Percentuale mine: " + selectMines.getValue() + "%");
         }
         width = selectRows.getValue();
         height = selectColumns.getValue();
@@ -215,7 +220,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     public void timerGeneration() {
         // Chronometer declaration
         chronometer = new Timer(1000, this);
-        chronometer.start();
 
         // Adding the chronometer panel to the main screen
         chronometerPanel = new JPanel();
@@ -244,6 +248,18 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         int totalCellNumber = width * height;
         int mineNumber = totalCellNumber * mines / 100;
         mineCounter = mineNumber;
+        leftToWin = totalCellNumber - mineNumber;
+
+        // Setting the mines counter display JLabel
+        minesPanel = new JPanel();
+        minesPanel.setBounds(1300, 25, 300, 50);
+        minesPanel.setBackground(backgroundTheme);
+        minesLeft = new JLabel("Mine rimanenti: " + mineCounter);
+        minesLeft.setForeground(Color.WHITE);
+        minesLeft.setFont(buttonsFont);
+        minesPanel.add(minesLeft);
+        this.add(minesPanel);
+
         int assignRow, assignColumn;
         while (mineNumber > 0) {
             assignRow = randomizer.nextInt(0, height);
@@ -271,9 +287,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                                 }
                             } catch (IndexOutOfBoundsException e) {}
                         }
-                    }
-                    if (num == 0) {
-                        playBoard[i][j].setText("0");
                     }
                     numberBoard[i][j] = num;
                     paintNumbers(i, j);
@@ -331,6 +344,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     }
 
     public void ifZero(int i, int j) {
+        leftToWin--;
         playBoard[i][j].setText("!");
         numberBoard[i][j] = -3;
         int[] around = findAround(i, j);
@@ -463,7 +477,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == chronometer) {
             seconds++;
-            chronometerPanel.repaint();
             if (seconds == 60) {
                 minutes++;
                 seconds = 0;
@@ -508,12 +521,13 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     @Override
     public void mousePressed(java.awt.event.MouseEvent e) {
-        if ((e.getModifiers() & e.BUTTON1_MASK) != 0) { // Left mouse
+        if ((e.getModifiers() & e.BUTTON1_MASK) != 0 && !endGame) { // Left mouse
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
                     if (e.getSource() == playBoard[i][j]) {
                         if (!firstInput) {
                             firstInput = true;
+                            chronometer.start();
                             numberGeneration(i, j);
                         }
                         if (playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
@@ -522,26 +536,53 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                             } else if (numberBoard[i][j] > 0) {
                                 playBoard[i][j].setText("" + numberBoard[i][j]);
                                 playBoard[i][j].setBackground(backgroundCellFound);
+                                leftToWin--;
+                                if (leftToWin == 0) {
+                                    chronometer.stop();
+                                    endGame = true;
+                                    String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
+                                    int endChoice = JOptionPane.showOptionDialog(null, "Complimenti! Hai vinto!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
+                                    if (endChoice == 0) {
+                                        this.dispose();
+                                        // TO FIX
+                                        //Main.createApp(this);
+                                    } else if (endChoice == 1) {
+                                        this.dispose();
+                                    }
+                                }
                             } else if (numberBoard[i][j] == -1){
                                 chronometer.stop();
+                                endGame = true;
                                 String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
                                 int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
                                 if (endChoice == 0) {
-                                    Main.main(null);
                                     this.dispose();
-                                    System.exit(0);
+                                    // TO FIX
+                                    //Main.createApp(this);
                                 } else if (endChoice == 1) {
                                     this.dispose();
-                                    System.exit(0);
                                 } else {
+                                    // A sub-cycle is created in order to show all the cells
                                     for (int s = 0; s < height; s++) {
                                         for (int t = 0; t < width; t++) {
                                             if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
                                                 if (numberBoard[s][t] == -1) {
-                                                    playBoard[s][t].setText("!");
+                                                    if (playBoard[s][t].getIcon() != flag) {
+                                                        playBoard[s][t].setIcon(mineIcon);
+                                                        playBoard[s][t].setBackground(Color.DARK_GRAY);
+                                                    } else {
+                                                        playBoard[s][t].setBackground(new Color(0x014B00));
+                                                    }
                                                 } else {
-                                                    playBoard[s][t].setText("" + numberBoard[s][t]);
+                                                    if (playBoard[s][t].getIcon() == flag) {
+                                                        playBoard[s][t].setBackground(new Color(0x5E0300));
+                                                    } else {
+                                                        playBoard[s][t].setText("" + numberBoard[s][t]);
+                                                        playBoard[s][t].setBackground(backgroundCellFound);
+                                                    }
                                                 }
+                                            } else {
+                                                playBoard[s][t].setBackground(backgroundCellFound);
                                             }
                                         }
                                     }
@@ -551,16 +592,20 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                     }
                 }
             }
-        } else if ((e.getModifiers() & e.BUTTON3_MASK) != 0) {
+        } else if ((e.getModifiers() & e.BUTTON3_MASK) != 0 && !endGame) {
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
-                    if (e.getSource() == playBoard[i][j]) {
+                    if (e.getSource() == playBoard[i][j] && mineCounter != 0) {
                         if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
                             playBoard[i][j].setIcon(flag);
+                            mineCounter--;
+                            minesLeft.setText("Mine rimanenti: " + mineCounter);
                         } else if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() == flag) {
                             playBoard[i][j].setIcon(notSure);
                         } else {
                             playBoard[i][j].setIcon(null);
+                            mineCounter++;
+                            minesLeft.setText("Mine rimanenti: " + mineCounter);
                         }
                     }
                 }
