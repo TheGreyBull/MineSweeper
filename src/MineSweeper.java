@@ -14,12 +14,14 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     // ATTENTION: height is the number of rows and width is the number of columns
     int width = 8, height = 8, mines = 10;
     int seconds = 0, minutes = 0;
+    int mineCounter;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
     JLabel[][] playBoard;
     JSlider selectRows, selectColumns, selectMines;
-    ImageIcon flag = new ImageIcon("flag.jpg");
+    ImageIcon flag;
+    ImageIcon notSure;
     JButton confirmButton = new JButton("Gioca");
     JButton fieldOptions9x9;
     JButton fieldOptions16x16;
@@ -90,8 +92,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         minesNumber.setFont(new Font("Futura", Font.BOLD, 30));
         minesNumber.setBounds(15, 5, 500, 50);
 
-        selectRows = new JSlider(8, 75, 8);
-        selectColumns = new JSlider(8, 75, 8);
+        selectRows = new JSlider(8, 65, 8);
+        selectColumns = new JSlider(8, 65, 8);
         selectMines = new JSlider(5, 99, 5);
         selectRows.setBackground(panelTheme);
         selectColumns.setBackground(panelTheme);
@@ -193,6 +195,11 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                 mainBoard.add(playBoard[i][j]);
                 playBoard[i][j].setForeground(Color.WHITE);
                 playBoard[i][j].setBorder(boardBorder);
+                playBoard[i][j].setHorizontalTextPosition(JLabel.CENTER);
+                playBoard[i][j].setHorizontalTextPosition(JLabel.CENTER);
+                playBoard[i][j].setHorizontalAlignment(JLabel.CENTER);
+                playBoard[i][j].setVerticalAlignment(JLabel.CENTER);
+                playBoard[i][j].addMouseListener(this);
             }
         }
     }
@@ -215,7 +222,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         displayTime.setFont(buttonsFont);
     }
 
-    public void numberGeneration() {
+    public void numberGeneration(int ignoreRow, int ignoreColumn) {
         Random randomizer = new Random();
         numberBoard = new int[height][width];
         // Assigning 0 to all cells
@@ -227,15 +234,21 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
         // Calculation of the mines based on the percentage, width and height
         int totalCellNumber = width * height;
+        System.out.println(width + " " + height + " " + mines);
         int mineNumber = totalCellNumber * mines / 100;
+        System.out.println(mineNumber);
+        mineCounter = mineNumber;
         int assignRow, assignColumn;
         while (mineNumber > 0) {
             assignRow = randomizer.nextInt(0, height);
             assignColumn = randomizer.nextInt(0, width);
-            if (!(numberBoard[assignRow][assignColumn] == -1)) {
+            if (numberBoard[assignRow][assignColumn] != -1 && (assignRow != ignoreRow || assignColumn != ignoreColumn)) {
                 mineNumber--;
             }
-            playBoard[assignRow][assignColumn].setText("-1");
+            if (assignRow != ignoreRow || assignColumn != ignoreColumn) {
+                numberBoard[assignRow][assignColumn] = -1;
+                playBoard[assignRow][assignColumn].setText("-1");
+            }
         }
     }
 
@@ -249,7 +262,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.add(mainBoard);
         boardGeneration();
         timerGeneration();
-        numberGeneration();
+        flag = new ImageIcon(new ImageIcon("flag.png").getImage().getScaledInstance(playBoard[0][0].getWidth(), playBoard[0][0].getHeight(), Image.SCALE_SMOOTH));
+        notSure = new ImageIcon(new ImageIcon("notsure.png").getImage().getScaledInstance(playBoard[0][0].getWidth(), playBoard[0][0].getHeight(), Image.SCALE_SMOOTH));
     }
 
     @Override
@@ -301,7 +315,33 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     @Override
     public void mousePressed(java.awt.event.MouseEvent e) {
-
+        if ((e.getModifiers() & e.BUTTON1_MASK) != 0) { // Left mouse
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (e.getSource() == playBoard[i][j]) {
+                        if (!firstInput) {
+                            firstInput = true;
+                            numberGeneration(i, j);
+                        }
+                        playBoard[i][j].setText("" + numberBoard[i][j]);
+                    }
+                }
+            }
+        } else if ((e.getModifiers() & e.BUTTON3_MASK) != 0) {
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (e.getSource() == playBoard[i][j]) {
+                        if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
+                            playBoard[i][j].setIcon(flag);
+                        } else if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() == flag) {
+                            playBoard[i][j].setIcon(notSure);
+                        } else {
+                            playBoard[i][j].setIcon(null);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -317,5 +357,36 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     @Override
     public void mouseExited(java.awt.event.MouseEvent e) {
 
+    }
+
+
+    // To use later
+    public void paintNumbers(int i, int j) {
+        switch(playBoard[i][j].getText()) {
+            case "1":
+                playBoard[i][j].setForeground(new Color(0,0,255,255));
+                break;
+            case "2":
+                playBoard[i][j].setForeground(new Color(0,128,0,255));
+                break;
+            case "3":
+                playBoard[i][j].setForeground(new Color(255,0,0,255));
+                break;
+            case "4":
+                playBoard[i][j].setForeground(new Color(0,0,128,255));
+                break;
+            case "5":
+                playBoard[i][j].setForeground(new Color(128,0,0,255));
+                break;
+            case "6":
+                playBoard[i][j].setForeground(new Color(0,128,128,255));
+                break;
+            case "7":
+                playBoard[i][j].setForeground(new Color(0,0,0,255));
+                break;
+            case "8":
+                playBoard[i][j].setForeground(new Color(128,128,128,255));
+                break;
+        }
     }
 }
