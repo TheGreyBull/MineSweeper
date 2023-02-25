@@ -17,8 +17,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     int mineCounter = 1;
     int squareSize = 0;
     int boardFontSize = 4;
-    // Used to indicate how many cells the players needs to uncover before winning
-    int leftToWin = 1;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
@@ -179,7 +177,14 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         // Setting the correct width based on the number of rows and columns
         squareSize = screenHeight / height;
         // A chosen font size standard for all dimensions
-        boardFontSize = (squareSize - 1) * 8 / 9;
+        double ratio = (double)width / (double)height;
+        if (ratio < 3) {
+            boardFontSize = (squareSize - 1) * 8 / 9;
+        } else if (ratio < 6){
+            boardFontSize = (squareSize - 1) * 5 / 9;
+        } else {
+            boardFontSize = (squareSize - 1) * 2 / 9;
+        }
         int boardWidth = squareSize * width;
         int boardHeight = screenHeight;
         // Handling the case where the boardWidth becomes higher than the screenWidth
@@ -248,7 +253,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         int totalCellNumber = width * height;
         int mineNumber = totalCellNumber * mines / 100;
         mineCounter = mineNumber;
-        leftToWin = totalCellNumber - mineNumber;
 
         // Setting the mines counter display JLabel
         minesPanel = new JPanel();
@@ -344,7 +348,6 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     }
 
     public void ifZero(int i, int j) {
-        leftToWin--;
         playBoard[i][j].setText("!");
         numberBoard[i][j] = -3;
         int[] around = findAround(i, j);
@@ -458,6 +461,26 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         playBoard[i][j].setBackground(backgroundCellFound);
     }
 
+    public void checkWin() {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (playBoard[i][j].getText() == "" && numberBoard[i][j] > 0) {
+                    return;
+                }
+            }
+        }
+        endGame = true;
+        String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
+        int endChoice = JOptionPane.showOptionDialog(null, "Hai vinto!", "Vittoria", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
+        if (endChoice == 0) {
+            this.dispose();
+            // TO FIX
+            //Main.createApp(this);
+        } else if (endChoice == 1) {
+            this.dispose();
+        }
+    }
+
     MineSweeper() {
         initialSettings();
         selectDifficultyPanel = new JPanel();
@@ -533,23 +556,11 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                         if (playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
                             if (numberBoard[i][j] == 0) {
                                 ifZero(i, j);
+                                checkWin();
                             } else if (numberBoard[i][j] > 0) {
                                 playBoard[i][j].setText("" + numberBoard[i][j]);
                                 playBoard[i][j].setBackground(backgroundCellFound);
-                                leftToWin--;
-                                if (leftToWin == 0) {
-                                    chronometer.stop();
-                                    endGame = true;
-                                    String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
-                                    int endChoice = JOptionPane.showOptionDialog(null, "Complimenti! Hai vinto!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
-                                    if (endChoice == 0) {
-                                        this.dispose();
-                                        // TO FIX
-                                        //Main.createApp(this);
-                                    } else if (endChoice == 1) {
-                                        this.dispose();
-                                    }
-                                }
+                                checkWin();
                             } else if (numberBoard[i][j] == -1){
                                 chronometer.stop();
                                 endGame = true;
@@ -582,6 +593,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                                                     }
                                                 }
                                             } else {
+                                                if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
+                                                    playBoard[s][t].setBackground(new Color(0x5E0300));
+                                                }
                                                 playBoard[s][t].setBackground(backgroundCellFound);
                                             }
                                         }
@@ -600,7 +614,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                             playBoard[i][j].setIcon(flag);
                             mineCounter--;
                             minesLeft.setText("Mine rimanenti: " + mineCounter);
-                        } else if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() == flag) {
+                        } else if (playBoard[i][j].getIcon() == flag) {
                             playBoard[i][j].setIcon(notSure);
                         } else {
                             playBoard[i][j].setIcon(null);
