@@ -16,6 +16,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     int seconds = 0, minutes = 0;
     int mineCounter;
     int squareSize = 0;
+    int boardFontSize = 4;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
@@ -23,6 +24,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JSlider selectRows, selectColumns, selectMines;
     ImageIcon flag;
     ImageIcon notSure;
+    ImageIcon mineIcon;
     JButton confirmButton = new JButton("Gioca");
     JButton fieldOptions9x9;
     JButton fieldOptions16x16;
@@ -42,9 +44,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     int screenWidth = (int)screenDimensions.getWidth();
 
     boolean startMatch = false;
-    Border test = BorderFactory.createLineBorder(Color.WHITE, 1);
-    Border boardBorder = BorderFactory.createLineBorder(new Color(0x7c7b7d), 1);
+    Border boardBorder = BorderFactory.createLineBorder(new Color(0x2F2E30), 1);
     Color backgroundTheme = new Color(0x121212);
+    Color backgroundCellFound = new Color(0x262626);
     Color panelTheme = new Color(0x1e1e1e);
     Font buttonsFont = new Font("Futura", Font.BOLD, 30);
 
@@ -171,6 +173,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     public void boardGeneration() {
         // Setting the correct width based on the number of rows and columns
         squareSize = screenHeight / height;
+        // A chosen font size standard for all dimensions
+        boardFontSize = (squareSize - 1) * 8 / 9;
         int boardWidth = squareSize * width;
         int boardHeight = screenHeight;
         // Handling the case where the boardWidth becomes higher than the screenWidth
@@ -194,6 +198,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             for (int j = 0; j < width; j++) {
                 playBoard[i][j] = new JLabel();
                 mainBoard.add(playBoard[i][j]);
+                playBoard[i][j].setOpaque(true);
+                playBoard[i][j].setBackground(backgroundTheme);
                 playBoard[i][j].setForeground(Color.WHITE);
                 playBoard[i][j].setBorder(boardBorder);
                 playBoard[i][j].setHorizontalTextPosition(JLabel.CENTER);
@@ -201,6 +207,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                 playBoard[i][j].setHorizontalAlignment(JLabel.CENTER);
                 playBoard[i][j].setVerticalAlignment(JLabel.CENTER);
                 playBoard[i][j].addMouseListener(this);
+                playBoard[i][j].setFont(new Font("Futura", Font.BOLD, boardFontSize));
             }
         }
     }
@@ -235,22 +242,206 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
         // Calculation of the mines based on the percentage, width and height
         int totalCellNumber = width * height;
-        System.out.println(width + " " + height + " " + mines);
         int mineNumber = totalCellNumber * mines / 100;
-        System.out.println(mineNumber);
         mineCounter = mineNumber;
         int assignRow, assignColumn;
         while (mineNumber > 0) {
             assignRow = randomizer.nextInt(0, height);
             assignColumn = randomizer.nextInt(0, width);
+            // The "and" condition was added in order not to delete mineNumbers if the randomisation was equal to the first input
             if (numberBoard[assignRow][assignColumn] != -1 && (assignRow != ignoreRow || assignColumn != ignoreColumn)) {
                 mineNumber--;
             }
             if (assignRow != ignoreRow || assignColumn != ignoreColumn) {
                 numberBoard[assignRow][assignColumn] = -1;
-                playBoard[assignRow][assignColumn].setText("-1");
             }
         }
+
+        // Assigning numbers to all cells
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (numberBoard[i][j] != -1) {
+                    int num = 0;
+                    // Checks all the cells around the selected one (around numberBoard[i][j]
+                    for (int r = -1; r < 2; r++) {
+                        for (int c = -1; c < 2; c++) {
+                            try {
+                                if (numberBoard[i+r][j+c] == -1) {
+                                    num++;
+                                }
+                            } catch (IndexOutOfBoundsException e) {}
+                        }
+                    }
+                    if (num == 0) {
+                        playBoard[i][j].setText("0");
+                    }
+                    numberBoard[i][j] = num;
+                    paintNumbers(i, j);
+                }
+            }
+        }
+    }
+
+    // Used for painting the numbers based on their number
+    public void paintNumbers(int i, int j) {
+        switch(numberBoard[i][j]) {
+            case 1:
+                playBoard[i][j].setForeground(new Color(38, 122,255,255));
+                break;
+            case 2:
+                playBoard[i][j].setForeground(new Color(0,128,0,255));
+                break;
+            case 3:
+                playBoard[i][j].setForeground(new Color(255,0,0,255));
+                break;
+            case 4:
+                playBoard[i][j].setForeground(new Color(65, 89,128,255));
+                break;
+            case 5:
+                playBoard[i][j].setForeground(new Color(128,0,0,255));
+                break;
+            case 6:
+                playBoard[i][j].setForeground(new Color(0,128,128,255));
+                break;
+            case 7:
+                playBoard[i][j].setForeground(new Color(0,0,0,255));
+                break;
+            case 8:
+                playBoard[i][j].setForeground(new Color(128,128,128,255));
+                break;
+        }
+    }
+
+    // Information for findAround() and ifZero() about the result -> -1 (mine in the cell), -2 (index went out of bound), -3 (cells with 0 that have been visited)
+    public int[] findAround(int i, int j) {
+        int[] result = new int[9];
+        int k = 0;
+        for (int r = -1; r < 2; r++) {
+            for (int c = -1; c < 2; c++) {
+                try {
+                    result[k] = numberBoard[i+r][j+c];
+                    k++;
+                } catch (IndexOutOfBoundsException e) {
+                    result[k] = -2;
+                    k++;
+                }
+            }
+        }
+        return result;
+    }
+
+    public void ifZero(int i, int j) {
+        playBoard[i][j].setText("!");
+        numberBoard[i][j] = -3;
+        int[] around = findAround(i, j);
+        ArrayList<Integer> zeros = new ArrayList<Integer>();
+        for (int k = 0; k < around.length; k++) {
+            // if around[k] is > 0 we need to display the number in it
+            if (around[k] > 0) {
+                playBoard[i][j].setBackground(backgroundCellFound);
+                switch (k) {
+                    case 0:
+                        playBoard[i - 1][j - 1].setText("" + numberBoard[i - 1][j - 1]);
+                        playBoard[i - 1][j - 1].setBackground(backgroundCellFound);
+                        break;
+                    case 1:
+                        playBoard[i - 1][j].setText("" + numberBoard[i - 1][j]);
+                        playBoard[i - 1][j].setBackground(backgroundCellFound);
+                        break;
+                    case 2:
+                        playBoard[i - 1][j + 1].setText("" + numberBoard[i - 1][j + 1]);
+                        playBoard[i - 1][j + 1].setBackground(backgroundCellFound);
+                        break;
+                    case 3:
+                        playBoard[i][j - 1].setText("" + numberBoard[i][j - 1]);
+                        playBoard[i][j - 1].setBackground(backgroundCellFound);
+                        break;
+                    case 5:
+                        playBoard[i][j + 1].setText("" + numberBoard[i][j + 1]);
+                        playBoard[i][j + 1].setBackground(backgroundCellFound);
+                        break;
+                    case 6:
+                        playBoard[i + 1][j - 1].setText("" + numberBoard[i + 1][j - 1]);
+                        playBoard[i + 1][j - 1].setBackground(backgroundCellFound);
+                        break;
+                    case 7:
+                        playBoard[i + 1][j].setText("" + numberBoard[i + 1][j]);
+                        playBoard[i + 1][j].setBackground(backgroundCellFound);
+                        break;
+                    case 8:
+                        playBoard[i + 1][j + 1].setText("" + numberBoard[i + 1][j + 1]);
+                        playBoard[i + 1][j + 1].setBackground(backgroundCellFound);
+                        break;
+                }
+            } else if (around[k] == 0) {
+                playBoard[i][j].setBackground(backgroundCellFound);
+                switch (k) {
+                    case 0:
+                        playBoard[i - 1][j - 1].setText("!");
+                        numberBoard[i - 1][j - 1] = -3;
+                        break;
+                    case 1:
+                        playBoard[i - 1][j].setText("!");
+                        numberBoard[i - 1][j] = -3;
+                        break;
+                    case 2:
+                        playBoard[i - 1][j + 1].setText("!");
+                        numberBoard[i - 1][j + 1] = -3;
+                        break;
+                    case 3:
+                        playBoard[i][j - 1].setText("!");
+                        numberBoard[i][j - 1] = -3;
+                        break;
+                    case 5:
+                        playBoard[i][j + 1].setText("!");
+                        numberBoard[i][j + 1] = -3;
+                        break;
+                    case 6:
+                        playBoard[i + 1][j - 1].setText("!");
+                        numberBoard[i + 1][j - 1] = -3;
+                        break;
+                    case 7:
+                        playBoard[i + 1][j].setText("!");
+                        numberBoard[i + 1][j] = -3;
+                        break;
+                    case 8:
+                        playBoard[i + 1][j + 1].setText("!");
+                        numberBoard[i + 1][j + 1] = -3;
+                        break;
+                }
+                zeros.add(k);
+            }
+        }
+        for (int k = 0; k < zeros.size(); k++) {
+            switch (zeros.get(k)) {
+                case 0:
+                    ifZero(i-1, j-1);
+                    break;
+                case 1:
+                    ifZero(i-1, j);
+                    break;
+                case 2:
+                    ifZero(i-1, j+1);
+                    break;
+                case 3:
+                    ifZero(i, j-1);
+                    break;
+                case 5:
+                    ifZero(i, j+1);
+                    break;
+                case 6:
+                    ifZero(i+1, j-1);
+                    break;
+                case 7:
+                    ifZero(i+1, j);
+                    break;
+                case 8:
+                    ifZero(i+1, j+1);
+                    break;
+            }
+        }
+        playBoard[i][j].setText("");
+        playBoard[i][j].setBackground(backgroundCellFound);
     }
 
     MineSweeper() {
@@ -263,9 +454,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.add(mainBoard);
         boardGeneration();
         timerGeneration();
-        System.out.println(squareSize);
         flag = new ImageIcon(new ImageIcon("flag.png").getImage().getScaledInstance(squareSize, squareSize, Image.SCALE_SMOOTH));
         notSure = new ImageIcon(new ImageIcon("notsure.png").getImage().getScaledInstance(squareSize, squareSize, Image.SCALE_SMOOTH));
+        mineIcon = new ImageIcon(new ImageIcon("mine.png").getImage().getScaledInstance(squareSize, squareSize, Image.SCALE_SMOOTH));
     }
 
     @Override
@@ -325,7 +516,38 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                             firstInput = true;
                             numberGeneration(i, j);
                         }
-                        playBoard[i][j].setText("" + numberBoard[i][j]);
+                        if (playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
+                            if (numberBoard[i][j] == 0) {
+                                ifZero(i, j);
+                            } else if (numberBoard[i][j] > 0) {
+                                playBoard[i][j].setText("" + numberBoard[i][j]);
+                                playBoard[i][j].setBackground(backgroundCellFound);
+                            } else if (numberBoard[i][j] == -1){
+                                chronometer.stop();
+                                String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
+                                int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
+                                if (endChoice == 0) {
+                                    Main.main(null);
+                                    this.dispose();
+                                    System.exit(0);
+                                } else if (endChoice == 1) {
+                                    this.dispose();
+                                    System.exit(0);
+                                } else {
+                                    for (int s = 0; s < height; s++) {
+                                        for (int t = 0; t < width; t++) {
+                                            if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
+                                                if (numberBoard[s][t] == -1) {
+                                                    playBoard[s][t].setText("!");
+                                                } else {
+                                                    playBoard[s][t].setText("" + numberBoard[s][t]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -353,42 +575,15 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     @Override
     public void mouseEntered(java.awt.event.MouseEvent e) {
+        /*for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
 
+            }
+        }*/
     }
 
     @Override
     public void mouseExited(java.awt.event.MouseEvent e) {
 
-    }
-
-
-    // To use later
-    public void paintNumbers(int i, int j) {
-        switch(playBoard[i][j].getText()) {
-            case "1":
-                playBoard[i][j].setForeground(new Color(0,0,255,255));
-                break;
-            case "2":
-                playBoard[i][j].setForeground(new Color(0,128,0,255));
-                break;
-            case "3":
-                playBoard[i][j].setForeground(new Color(255,0,0,255));
-                break;
-            case "4":
-                playBoard[i][j].setForeground(new Color(0,0,128,255));
-                break;
-            case "5":
-                playBoard[i][j].setForeground(new Color(128,0,0,255));
-                break;
-            case "6":
-                playBoard[i][j].setForeground(new Color(0,128,128,255));
-                break;
-            case "7":
-                playBoard[i][j].setForeground(new Color(0,0,0,255));
-                break;
-            case "8":
-                playBoard[i][j].setForeground(new Color(128,128,128,255));
-                break;
-        }
     }
 }
