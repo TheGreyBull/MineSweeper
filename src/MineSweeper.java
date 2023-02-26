@@ -347,6 +347,20 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         return result;
     }
 
+    public int findAroundFlags(int i, int j) {
+        int aroundFlags = 0;
+        for (int r = -1; r < 2; r++) {
+            for (int c = -1; c < 2; c++) {
+                try {
+                    if (playBoard[i+r][j+c].getIcon() == flag) {
+                        aroundFlags++;
+                    }
+                } catch (IndexOutOfBoundsException e) {}
+            }
+        }
+        return aroundFlags;
+    }
+
     public void ifZero(int i, int j) {
         playBoard[i][j].setText("!");
         numberBoard[i][j] = -3;
@@ -481,6 +495,65 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         }
     }
 
+    public void gameOver() {
+        chronometer.stop();
+        endGame = true;
+        String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
+        int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
+        if (endChoice == 0) {
+            this.dispose();
+            // TO FIX
+            //Main.createApp(this);
+        } else if (endChoice == 1) {
+            this.dispose();
+        } else {
+            // A sub-cycle is created in order to show all the cells
+            for (int s = 0; s < height; s++) {
+                for (int t = 0; t < width; t++) {
+                    if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
+                        if (numberBoard[s][t] == -1) {
+                            if (playBoard[s][t].getIcon() != flag) {
+                                playBoard[s][t].setIcon(mineIcon);
+                                playBoard[s][t].setBackground(Color.DARK_GRAY);
+                            } else {
+                                playBoard[s][t].setBackground(new Color(0x014B00));
+                            }
+                        } else {
+                            if (playBoard[s][t].getIcon() == flag) {
+                                playBoard[s][t].setBackground(new Color(0x5E0300));
+                            } else {
+                                playBoard[s][t].setText("" + numberBoard[s][t]);
+                                playBoard[s][t].setBackground(backgroundCellFound);
+                            }
+                        }
+                    } else {
+                        if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
+                            playBoard[s][t].setBackground(new Color(0x5E0300));
+                        }
+                        playBoard[s][t].setBackground(backgroundCellFound);
+                    }
+                }
+            }
+        }
+    }
+
+    public void uncoverNearNumbers(int i, int j) {
+        for (int r = -1; r < 2; r++) {
+            for (int c = -1; c < 2; c++) {
+                try {
+                    if (numberBoard[i+r][j+c] > 0 && playBoard[i+r][j+c].getIcon() != flag && playBoard[i+r][j+c].getIcon() != notSure) {
+                        playBoard[i+r][j+c].setText("" + numberBoard[i+r][j+c]);
+                        playBoard[i+r][j+c].setBackground(backgroundCellFound);
+                    } else if (numberBoard[i+r][j+c] == -1 && playBoard[i+r][j+c].getIcon() != flag && playBoard[i+r][j+c].getIcon() != notSure) {
+                        gameOver();
+                    } else if (numberBoard[i+r][j+c] == 0) {
+                        ifZero(i+r, j+c);
+                    }
+                } catch (IndexOutOfBoundsException e) {}
+            }
+        }
+    }
+
     MineSweeper() {
         initialSettings();
         selectDifficultyPanel = new JPanel();
@@ -540,7 +613,17 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
         if ((e.getModifiers() & e.BUTTON1_MASK) != 0 && !endGame) {
-
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (e.getSource() == playBoard[i][j] && numberBoard[i][j] > 0 && playBoard[i][j].getText().equals("" + numberBoard[i][j])) {
+                        int nearMines = findAroundFlags(i, j);
+                        if (nearMines == numberBoard[i][j]) {
+                            uncoverNearNumbers(i, j);
+                            checkWin();
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -564,45 +647,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                                 playBoard[i][j].setBackground(backgroundCellFound);
                                 checkWin();
                             } else if (numberBoard[i][j] == -1){
-                                chronometer.stop();
-                                endGame = true;
-                                String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
-                                int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
-                                if (endChoice == 0) {
-                                    this.dispose();
-                                    // TO FIX
-                                    //Main.createApp(this);
-                                } else if (endChoice == 1) {
-                                    this.dispose();
-                                } else {
-                                    // A sub-cycle is created in order to show all the cells
-                                    for (int s = 0; s < height; s++) {
-                                        for (int t = 0; t < width; t++) {
-                                            if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
-                                                if (numberBoard[s][t] == -1) {
-                                                    if (playBoard[s][t].getIcon() != flag) {
-                                                        playBoard[s][t].setIcon(mineIcon);
-                                                        playBoard[s][t].setBackground(Color.DARK_GRAY);
-                                                    } else {
-                                                        playBoard[s][t].setBackground(new Color(0x014B00));
-                                                    }
-                                                } else {
-                                                    if (playBoard[s][t].getIcon() == flag) {
-                                                        playBoard[s][t].setBackground(new Color(0x5E0300));
-                                                    } else {
-                                                        playBoard[s][t].setText("" + numberBoard[s][t]);
-                                                        playBoard[s][t].setBackground(backgroundCellFound);
-                                                    }
-                                                }
-                                            } else {
-                                                if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
-                                                    playBoard[s][t].setBackground(new Color(0x5E0300));
-                                                }
-                                                playBoard[s][t].setBackground(backgroundCellFound);
-                                            }
-                                        }
-                                    }
-                                }
+                                gameOver();
                             }
                         }
                     }
@@ -611,8 +656,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         } else if ((e.getModifiers() & e.BUTTON3_MASK) != 0 && !endGame) {
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
-                    if (e.getSource() == playBoard[i][j] && mineCounter != 0) {
-                        if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure && numberBoard[i][j] != -3) {
+                    if (e.getSource() == playBoard[i][j]) {
+                        if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure && numberBoard[i][j] != -3 && mineCounter != 0) {
                             playBoard[i][j].setIcon(flag);
                             mineCounter--;
                             minesLeftLabel.setText("Mine rimanenti: " + mineCounter);
