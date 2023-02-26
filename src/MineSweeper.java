@@ -62,6 +62,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     Color panelTheme = new Color(0x1e1e1e);
     Font buttonsFont = new Font("Futura", Font.BOLD, 30);
     Color backgroundMenu = new Color(0xCECECE);
+    Color backgroundNotFoundCells = new Color(0x424242);
 
     public void initialSettings() {
         this.setResizable(true);
@@ -557,16 +558,20 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                         } else {
                             if (playBoard[s][t].getIcon() == flag) {
                                 playBoard[s][t].setBackground(new Color(0x5E0300));
-                            } else {
+                            } else if (playBoard[s][t].getText() == "" && numberBoard[s][t] > 0){
                                 playBoard[s][t].setText("" + numberBoard[s][t]);
-                                playBoard[s][t].setBackground(backgroundCellFound);
+                                playBoard[s][t].setBackground(backgroundNotFoundCells);
                             }
                         }
                     } else {
                         if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
                             playBoard[s][t].setBackground(new Color(0x5E0300));
+                        } else if (playBoard[s][t].getText() == "" && numberBoard[s][t] > 0){
+                            playBoard[s][t].setText("" + numberBoard[s][t]);
+                            playBoard[s][t].setBackground(backgroundNotFoundCells);
+                        } else if (numberBoard[s][t] == 0) {
+                            playBoard[s][t].setBackground(backgroundNotFoundCells);
                         }
-                        playBoard[s][t].setBackground(backgroundCellFound);
                     }
                 }
             }
