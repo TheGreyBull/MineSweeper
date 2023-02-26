@@ -51,7 +51,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     boolean endGame = false;
 
     // Some height is deleted because of the quick access bar at the bottom of every OS
-    int screenHeight = (int)screenDimensions.getHeight() - 201;
+    int screenHeight = (int)screenDimensions.getHeight() - 235;
     int screenWidth = (int)screenDimensions.getWidth();
 
     boolean startMatch = false;
@@ -87,7 +87,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         exitItem.addActionListener(this);
 
         // Customizing the optionBar settings
-        otherMenu.setFont(new Font("Futura", Font.BOLD, 20));
+        otherMenu.setFont(new Font("Futura", Font.BOLD, 15));
         rulesItem.setFont(new Font("Futura", Font.BOLD, 20));
         scoresItem.setFont(new Font("Futura", Font.BOLD, 20));
         exitItem.setFont(new Font("Futura", Font.BOLD, 20));
@@ -644,7 +644,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             selectColumns.setValue(16);
             selectMines.setValue(21);
         } else if (e.getSource() == rulesItem) {
-            String rules = "Ogni quadrato viene ripulito, o scoperto, cliccando su di esso. Molti quadrati contengono mine: quando viene cliccato un quadrato con una mina,\nessa esploderà e farà terminare il gioco. Se verrà scoperto un quadrato non contenente una mina,verrà visualizzato all'interno di esso il\nnumero di mine attorno a quel quadrato. L'obiettivo del gioco e ripulire completamente il campo, lasciando coperti oppure contrassegnando\ncon una bandiera, solo i quadrati contenenti le mine.";
+            String rules = "Ogni quadrato viene ripulito, o scoperto, cliccando su di esso. Molti quadrati contengono mine: quando viene cliccato un quadrato con una mina,\nessa esploderà e farà terminare il gioco. Se verrà scoperto un quadrato non contenente una mina, verrà visualizzato all'interno di esso il\nnumero di mine attorno a quel quadrato. L'obiettivo del gioco è ripulire completamente il campo, lasciando coperti oppure contrassegnando\ncon una bandiera, solo i quadrati contenenti le mine.";
             JOptionPane.showMessageDialog(null, rules, "Regole di gioco", JOptionPane.INFORMATION_MESSAGE);
         } else if (e.getSource() == exitItem) {
             this.dispose();
