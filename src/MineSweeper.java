@@ -485,6 +485,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             }
         }
         endGame = true;
+        chronometer.stop();
         String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
         int endChoice = JOptionPane.showOptionDialog(null, "Hai vinto!", "Vittoria", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
         if (endChoice == 0) {
