@@ -36,6 +36,13 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JLabel displayTime;
     JLabel minesLeftLabel;
 
+    // Declares all the objects that are necessary for the top menu
+    JMenuBar optionBar;
+    JMenu otherMenu;
+    JMenuItem scoresItem;
+    JMenuItem exitItem;
+    JMenuItem rulesItem;
+
     // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
     int[][] numberBoard;
     // A first input is created in order to generate the board after it
@@ -54,6 +61,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     Color backgroundCellFound = new Color(0x262626);
     Color panelTheme = new Color(0x1e1e1e);
     Font buttonsFont = new Font("Futura", Font.BOLD, 30);
+    Color backgroundMenu = new Color(0xCECECE);
 
     public void initialSettings() {
         this.setResizable(true);
@@ -62,6 +70,32 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setVisible(true);
         this.getContentPane().setBackground(backgroundTheme);
+
+        // Adding the optionBar
+        optionBar = new JMenuBar();
+        otherMenu = new JMenu("Altro");
+        rulesItem = new JMenuItem("Regole");
+        scoresItem = new JMenuItem("Punteggi");
+        exitItem = new JMenuItem("Esci");
+        this.setJMenuBar(optionBar);
+        optionBar.add(otherMenu);
+        otherMenu.add(rulesItem);
+        otherMenu.add(scoresItem);
+        otherMenu.add(exitItem);
+        rulesItem.addActionListener(this);
+        scoresItem.addActionListener(this);
+        exitItem.addActionListener(this);
+
+        // Customizing the optionBar settings
+        otherMenu.setFont(new Font("Futura", Font.BOLD, 20));
+        rulesItem.setFont(new Font("Futura", Font.BOLD, 20));
+        scoresItem.setFont(new Font("Futura", Font.BOLD, 20));
+        exitItem.setFont(new Font("Futura", Font.BOLD, 20));
+        optionBar.setBackground(backgroundMenu);
+        exitItem.setBackground(backgroundMenu);
+        scoresItem.setBackground(backgroundMenu);
+        rulesItem.setBackground(backgroundMenu);
+        otherMenu.setForeground(Color.BLACK);
     }
 
     public void selectDifficulty() {
@@ -609,6 +643,12 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             selectRows.setValue(30);
             selectColumns.setValue(16);
             selectMines.setValue(21);
+        } else if (e.getSource() == rulesItem) {
+            String rules = "Ogni quadrato viene ripulito, o scoperto, cliccando su di esso. Molti quadrati contengono mine: quando viene cliccato un quadrato con una mina,\nessa esploderà e farà terminare il gioco. Se verrà scoperto un quadrato non contenente una mina,verrà visualizzato all'interno di esso il\nnumero di mine attorno a quel quadrato. L'obiettivo del gioco e ripulire completamente il campo, lasciando coperti oppure contrassegnando\ncon una bandiera, solo i quadrati contenenti le mine.";
+            JOptionPane.showMessageDialog(null, rules, "Regole di gioco", JOptionPane.INFORMATION_MESSAGE);
+        } else if (e.getSource() == exitItem) {
+            this.dispose();
+            System.exit(0);
         }
     }
 
