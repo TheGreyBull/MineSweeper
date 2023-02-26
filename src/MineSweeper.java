@@ -34,7 +34,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     Timer chronometer;
     JPanel chronometerPanel;
     JLabel displayTime;
-    JLabel minesLeft;
+    JLabel minesLeftLabel;
 
     // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
     int[][] numberBoard;
@@ -258,10 +258,10 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         minesPanel = new JPanel();
         minesPanel.setBounds(1300, 25, 300, 50);
         minesPanel.setBackground(backgroundTheme);
-        minesLeft = new JLabel("Mine rimanenti: " + mineCounter);
-        minesLeft.setForeground(Color.WHITE);
-        minesLeft.setFont(buttonsFont);
-        minesPanel.add(minesLeft);
+        minesLeftLabel = new JLabel("Mine rimanenti: " + mineCounter);
+        minesLeftLabel.setForeground(Color.WHITE);
+        minesLeftLabel.setFont(buttonsFont);
+        minesPanel.add(minesLeftLabel);
         this.add(minesPanel);
 
         int assignRow, assignColumn;
@@ -539,7 +539,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
 
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
+        if ((e.getModifiers() & e.BUTTON1_MASK) != 0 && !endGame) {
 
+        }
     }
 
     @Override
@@ -610,16 +612,16 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
                     if (e.getSource() == playBoard[i][j] && mineCounter != 0) {
-                        if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure) {
+                        if (playBoard[i][j].getText().equals("") && playBoard[i][j].getIcon() != flag && playBoard[i][j].getIcon() != notSure && numberBoard[i][j] != -3) {
                             playBoard[i][j].setIcon(flag);
                             mineCounter--;
-                            minesLeft.setText("Mine rimanenti: " + mineCounter);
+                            minesLeftLabel.setText("Mine rimanenti: " + mineCounter);
                         } else if (playBoard[i][j].getIcon() == flag) {
                             playBoard[i][j].setIcon(notSure);
-                        } else {
+                        } else if (playBoard[i][j].getIcon() == notSure){
                             playBoard[i][j].setIcon(null);
                             mineCounter++;
-                            minesLeft.setText("Mine rimanenti: " + mineCounter);
+                            minesLeftLabel.setText("Mine rimanenti: " + mineCounter);
                         }
                     }
                 }
