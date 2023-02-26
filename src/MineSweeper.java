@@ -50,6 +50,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     boolean startMatch = false;
     Border boardBorder = BorderFactory.createLineBorder(new Color(0x2F2E30), 1);
     Color backgroundTheme = new Color(0x121212);
+    Color backgroundFlag = new Color(0x1B1B1B);
     Color backgroundCellFound = new Color(0x262626);
     Color panelTheme = new Color(0x1e1e1e);
     Font buttonsFont = new Font("Futura", Font.BOLD, 30);
@@ -661,12 +662,14 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                             playBoard[i][j].setIcon(flag);
                             mineCounter--;
                             minesLeftLabel.setText("Mine rimanenti: " + mineCounter);
+                            playBoard[i][j].setBackground(backgroundFlag);
                         } else if (playBoard[i][j].getIcon() == flag) {
                             playBoard[i][j].setIcon(notSure);
                         } else if (playBoard[i][j].getIcon() == notSure){
                             playBoard[i][j].setIcon(null);
                             mineCounter++;
                             minesLeftLabel.setText("Mine rimanenti: " + mineCounter);
+                            playBoard[i][j].setBackground(backgroundTheme);
                         }
                     }
                 }
