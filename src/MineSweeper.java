@@ -42,6 +42,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JMenuItem scoresItem;
     JMenuItem exitItem;
     JMenuItem rulesItem;
+    JMenuItem restartItem;
 
     // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
     int[][] numberBoard;
@@ -67,6 +68,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     public void initialSettings() {
         this.setResizable(true);
         this.setTitle("Minesweeper");
+        this.setSize(1200, 700);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setVisible(true);
@@ -78,25 +80,30 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         rulesItem = new JMenuItem("Regole");
         scoresItem = new JMenuItem("Punteggi");
         exitItem = new JMenuItem("Esci");
+        restartItem = new JMenuItem("Riavvia");
         this.setJMenuBar(optionBar);
         optionBar.add(otherMenu);
         otherMenu.add(rulesItem);
         otherMenu.add(scoresItem);
         otherMenu.add(exitItem);
+        otherMenu.add(restartItem);
         rulesItem.addActionListener(this);
         scoresItem.addActionListener(this);
         exitItem.addActionListener(this);
+        restartItem.addActionListener(this);
 
         // Customizing the optionBar settings
         otherMenu.setFont(new Font("Futura", Font.BOLD, 15));
         rulesItem.setFont(new Font("Futura", Font.BOLD, 20));
         scoresItem.setFont(new Font("Futura", Font.BOLD, 20));
         exitItem.setFont(new Font("Futura", Font.BOLD, 20));
+        restartItem.setFont(new Font("Futura", Font.BOLD, 20));
         optionBar.setBackground(backgroundMenu);
         exitItem.setBackground(backgroundMenu);
         scoresItem.setBackground(backgroundMenu);
         rulesItem.setBackground(backgroundMenu);
         otherMenu.setForeground(Color.BLACK);
+        restartItem.setBackground(backgroundMenu);
     }
 
     public void selectDifficulty() {
@@ -539,6 +546,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
         if (endChoice == 0) {
             this.dispose();
+            new MineSweeper();
             // TO FIX
             //Main.createApp(this);
         } else if (endChoice == 1) {
@@ -654,6 +662,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         } else if (e.getSource() == exitItem) {
             this.dispose();
             System.exit(0);
+        } else if (e.getSource() == restartItem) {
+            this.dispose();
+            new MineSweeper();
         }
     }
 
