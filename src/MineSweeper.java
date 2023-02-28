@@ -85,7 +85,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.setVisible(true);
         this.getContentPane().setBackground(backgroundTheme);
 
-        // Verifying scoresFile existence
+        // Verifying scoresFile existence and initializing the arraylist with the scores
         setScore();
 
         // Adding the optionBar
@@ -222,6 +222,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         selectDifficultyPanel.add(fieldOptions30x16);
         this.repaint();
 
+        // This while loop causes the program to fail the restart
         while (!startMatch) {
             rowsNumber.setText("Larghezza: " + selectRows.getValue());
             columnsNumber.setText("Altezza: " + selectColumns.getValue());
@@ -640,6 +641,8 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     }
 
     public void restart() {
+        new MineSweeper();
+        this.dispose();
     }
 
     public void setScore() {
