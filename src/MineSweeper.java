@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicSliderUI;
@@ -8,6 +11,7 @@ import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.util.Random;
+import java.util.Scanner;
 
 public class MineSweeper extends JFrame implements MouseListener, ActionListener {
 
@@ -17,6 +21,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     int mineCounter = 1;
     int squareSize = 0;
     int boardFontSize = 4;
+    ArrayList<String> scores;
 
     JPanel selectDifficultyPanel;
     JPanel mainBoard;
@@ -43,6 +48,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     JMenuItem exitItem;
     JMenuItem rulesItem;
     JMenuItem restartItem;
+    JMenuItem resetScore;
 
     // Contains all the numbers and mines of the board (the mines are indicated with the -1 number)
     int[][] numberBoard;
@@ -50,10 +56,15 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     boolean firstInput = false;
     // Makes sure not to iterate useless cycles when the game ends
     boolean endGame = false;
+    boolean scoreExist = false;
 
     // Some height is deleted because of the quick access bar at the bottom of every OS
     int screenHeight = (int)screenDimensions.getHeight() - 235;
     int screenWidth = (int)screenDimensions.getWidth();
+
+    // Utilities for file management
+    File scoresFile;
+    Scanner reader;
 
     boolean startMatch = false;
     Border boardBorder = BorderFactory.createLineBorder(new Color(0x2F2E30), 1);
@@ -74,6 +85,9 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         this.setVisible(true);
         this.getContentPane().setBackground(backgroundTheme);
 
+        // Verifying scoresFile existence
+        setScore();
+
         // Adding the optionBar
         optionBar = new JMenuBar();
         otherMenu = new JMenu("Altro");
@@ -81,14 +95,17 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         scoresItem = new JMenuItem("Punteggi");
         exitItem = new JMenuItem("Esci");
         restartItem = new JMenuItem("Riavvia");
+        resetScore = new JMenuItem("Cancella punteggi");
         this.setJMenuBar(optionBar);
         optionBar.add(otherMenu);
         otherMenu.add(rulesItem);
         otherMenu.add(scoresItem);
+        otherMenu.add(resetScore);
         otherMenu.add(exitItem);
         otherMenu.add(restartItem);
         rulesItem.addActionListener(this);
         scoresItem.addActionListener(this);
+        resetScore.addActionListener(this);
         exitItem.addActionListener(this);
         restartItem.addActionListener(this);
 
@@ -96,11 +113,13 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         otherMenu.setFont(new Font("Futura", Font.BOLD, 15));
         rulesItem.setFont(new Font("Futura", Font.BOLD, 20));
         scoresItem.setFont(new Font("Futura", Font.BOLD, 20));
+        resetScore.setFont(new Font("Futura", Font.BOLD, 20));
         exitItem.setFont(new Font("Futura", Font.BOLD, 20));
         restartItem.setFont(new Font("Futura", Font.BOLD, 20));
         optionBar.setBackground(backgroundMenu);
         exitItem.setBackground(backgroundMenu);
         scoresItem.setBackground(backgroundMenu);
+        resetScore.setBackground(backgroundMenu);
         rulesItem.setBackground(backgroundMenu);
         otherMenu.setForeground(Color.BLACK);
         restartItem.setBackground(backgroundMenu);
@@ -201,6 +220,7 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         selectDifficultyPanel.add(fieldOptions9x9);
         selectDifficultyPanel.add(fieldOptions16x16);
         selectDifficultyPanel.add(fieldOptions30x16);
+        this.repaint();
 
         while (!startMatch) {
             rowsNumber.setText("Larghezza: " + selectRows.getValue());
@@ -528,14 +548,30 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         }
         endGame = true;
         chronometer.stop();
+
+        // Write the record inside the scores file
+        LocalDateTime date = LocalDateTime.now();
+        DateTimeFormatter dateType = DateTimeFormatter.ofPattern("dd-MM-yyyy, HH:mm.ss");
+        date.format(dateType);
+        String newScore = "Campo: " + width + "x" + height + ", mine: " + mines + "% - Tempo: " + minutes + " m, " + seconds + " s; Data: " + date.format(dateType);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("punteggi.txt"));
+            for (int i = 0; i < scores.size(); i++) {
+                writer.write(scores.get(i) + "\n");
+            }
+            writer.write(newScore);
+            writer.close();
+        } catch (IOException e) {}
+        setScore();
+
         String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
         int endChoice = JOptionPane.showOptionDialog(null, "Hai vinto!", "Vittoria", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
         if (endChoice == 0) {
-            this.dispose();
-            // TO FIX
-            //Main.createApp(this);
+            restart();
         } else if (endChoice == 1) {
             this.dispose();
+        } else {
+            watchBoard();
         }
     }
 
@@ -545,41 +581,41 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         String[] choices = {"Nuova partita", "Esci", "Guarda il campo"};
         int endChoice = JOptionPane.showOptionDialog(null, "Hai preso una mina!", "Fine partita", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choices, 0);
         if (endChoice == 0) {
-            this.dispose();
-            new MineSweeper();
-            // TO FIX
-            //Main.createApp(this);
+            restart();
         } else if (endChoice == 1) {
             this.dispose();
         } else {
-            // A sub-cycle is created in order to show all the cells
-            for (int s = 0; s < height; s++) {
-                for (int t = 0; t < width; t++) {
-                    if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
-                        if (numberBoard[s][t] == -1) {
-                            if (playBoard[s][t].getIcon() != flag) {
-                                playBoard[s][t].setIcon(mineIcon);
-                                playBoard[s][t].setBackground(Color.DARK_GRAY);
-                            } else {
-                                playBoard[s][t].setBackground(new Color(0x014B00));
-                            }
+            watchBoard();
+        }
+    }
+
+    public void watchBoard() {
+        for (int s = 0; s < height; s++) {
+            for (int t = 0; t < width; t++) {
+                if (numberBoard[s][t] != -3 && numberBoard[s][t] != 0) {
+                    if (numberBoard[s][t] == -1) {
+                        if (playBoard[s][t].getIcon() != flag) {
+                            playBoard[s][t].setIcon(mineIcon);
+                            playBoard[s][t].setBackground(Color.DARK_GRAY);
                         } else {
-                            if (playBoard[s][t].getIcon() == flag) {
-                                playBoard[s][t].setBackground(new Color(0x5E0300));
-                            } else if (playBoard[s][t].getText() == "" && numberBoard[s][t] > 0){
-                                playBoard[s][t].setText("" + numberBoard[s][t]);
-                                playBoard[s][t].setBackground(backgroundNotFoundCells);
-                            }
+                            playBoard[s][t].setBackground(new Color(0x014B00));
                         }
                     } else {
-                        if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
+                        if (playBoard[s][t].getIcon() == flag) {
                             playBoard[s][t].setBackground(new Color(0x5E0300));
                         } else if (playBoard[s][t].getText() == "" && numberBoard[s][t] > 0){
                             playBoard[s][t].setText("" + numberBoard[s][t]);
                             playBoard[s][t].setBackground(backgroundNotFoundCells);
-                        } else if (numberBoard[s][t] == 0) {
-                            playBoard[s][t].setBackground(backgroundNotFoundCells);
                         }
+                    }
+                } else {
+                    if (numberBoard[s][t] != -1 && playBoard[s][t].getIcon() == flag) {
+                        playBoard[s][t].setBackground(new Color(0x5E0300));
+                    } else if (playBoard[s][t].getText() == "" && numberBoard[s][t] > 0){
+                        playBoard[s][t].setText("" + numberBoard[s][t]);
+                        playBoard[s][t].setBackground(backgroundNotFoundCells);
+                    } else if (numberBoard[s][t] == 0) {
+                        playBoard[s][t].setBackground(backgroundNotFoundCells);
                     }
                 }
             }
@@ -600,6 +636,26 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
                     }
                 } catch (IndexOutOfBoundsException e) {}
             }
+        }
+    }
+
+    public void restart() {
+    }
+
+    public void setScore() {
+        scoresFile = new File("punteggi.txt");
+        scores = new ArrayList<>();
+        try {
+            // If the file doesn't exist it creates one
+            if (!scoresFile.createNewFile() || !reader.hasNextLine()) {
+                scoreExist = true;
+            }
+            reader = new Scanner(scoresFile);
+            while (reader.hasNextLine()) {
+                scores.add(reader.nextLine());
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Nessun punteggio rilevato.", "Errore punteggi", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -657,14 +713,64 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
             selectColumns.setValue(16);
             selectMines.setValue(21);
         } else if (e.getSource() == rulesItem) {
-            String rules = "Ogni quadrato viene ripulito, o scoperto, cliccando su di esso. Molti quadrati contengono mine: quando viene cliccato un quadrato con una mina,\nessa esploderà e farà terminare il gioco. Se verrà scoperto un quadrato non contenente una mina, verrà visualizzato all'interno di esso il\nnumero di mine attorno a quel quadrato. L'obiettivo del gioco è ripulire completamente il campo, lasciando coperti oppure contrassegnando\ncon una bandiera, solo i quadrati contenenti le mine.";
+            String rules = "Campo Minato:\nOgni quadrato viene ripulito, o scoperto, cliccando su di esso. Molti quadrati contengono mine: quando viene cliccato un quadrato con una mina,\nessa esploderà e farà terminare il gioco. Se verrà scoperto un quadrato non contenente una mina, verrà visualizzato all'interno di esso il\nnumero di mine attorno a quel quadrato. L'obiettivo del gioco è ripulire completamente il campo, lasciando coperti oppure contrassegnando\ncon una bandiera, solo i quadrati contenenti le mine.";
             JOptionPane.showMessageDialog(null, rules, "Regole di gioco", JOptionPane.INFORMATION_MESSAGE);
         } else if (e.getSource() == exitItem) {
             this.dispose();
             System.exit(0);
         } else if (e.getSource() == restartItem) {
-            this.dispose();
-            new MineSweeper();
+            restart();
+        } else if (e.getSource() == scoresItem) {
+            int scoreChoice = 0;
+            // iterator is the number of scores to skip when viewing (used to scroll through plenty of scores)
+            int iterator = 0;
+            // loopCounter is used because the program mustn't print more than 15 scores per iteration
+            int loopCounter;
+            // Used to close the score view, ending the while loop as well
+            boolean continueCycle = true;
+
+            String[] choices = {"Indietro", "Avanti", "Chiudi"};
+            String scoresToDisplay;
+
+            // If the scores file is empty/doesn't exist it will be displayed a warning telling there is no score recorded
+            if (scores.size() != 0) {
+                while (continueCycle) {
+                    loopCounter = 0;
+                    scoresToDisplay = "Verranno mostrati 15 punteggi per pagina:\n\n";
+
+                    for (int i = iterator; loopCounter < 15 && i < scores.size(); i++) {
+                        scoresToDisplay = scoresToDisplay + (i + 1) + ":\n";
+                        scoresToDisplay = scoresToDisplay + scores.get(i) + "\n\n";
+                        loopCounter++;
+                    }
+                    while (true) {
+                        scoreChoice = JOptionPane.showOptionDialog(null, scoresToDisplay, "Punteggi", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, 0);
+                        if (scoreChoice == 0) {
+                            if (iterator > 14) {
+                                iterator -= 15;
+                                break;
+                            }
+                        } else if (scoreChoice == 1) {
+                            if (scores.size() > (iterator + 15)) {
+                                iterator += 15;
+                                break;
+                            }
+                        } else {
+                            continueCycle = false;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Nessun punteggio rilevato.", "Punteggi", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } else if (e.getSource() == resetScore) {
+            try {
+                FileWriter writer = new FileWriter("punteggi.txt");
+                writer.write("");
+            } catch (IOException f) {}
+            JOptionPane.showMessageDialog(null, "Punteggi cancellati!", "Rimozione punteggi", JOptionPane.INFORMATION_MESSAGE);
+            setScore();
         }
     }
 
