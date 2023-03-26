@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 
 public class MineSweeper extends JFrame implements MouseListener, ActionListener {
 
@@ -220,10 +221,10 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
         selectDifficultyPanel.add(fieldOptions9x9);
         selectDifficultyPanel.add(fieldOptions16x16);
         selectDifficultyPanel.add(fieldOptions30x16);
-        this.repaint();
 
         // This while loop causes the program to fail the restart
         while (!startMatch) {
+            this.repaint();
             rowsNumber.setText("Larghezza: " + selectRows.getValue());
             columnsNumber.setText("Altezza: " + selectColumns.getValue());
             minesLeft.setText("Percentuale mine: " + selectMines.getValue() + "%");
@@ -641,8 +642,10 @@ public class MineSweeper extends JFrame implements MouseListener, ActionListener
     }
 
     public void restart() {
-        new MineSweeper();
-        this.dispose();
+        CompletableFuture.runAsync(() -> {
+            this.dispose();
+            new MineSweeper();
+        });
     }
 
     public void setScore() {
